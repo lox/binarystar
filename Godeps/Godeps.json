@@ -1,0 +1,24 @@
+{
+	"ImportPath": "github.com/lox/binarystar",
+	"GoVersion": "go1.4.2",
+	"Deps": [
+		{
+			"ImportPath": "github.com/dmcgowan/msgpack",
+			"Comment": "v2.1.1-14-gb2a4151",
+			"Rev": "b2a415181d61dad392b5e98e65b0cf7d73e606e7"
+		},
+		{
+			"ImportPath": "github.com/docker/libchan",
+			"Comment": "v0.1.0-14-g87eb956",
+			"Rev": "87eb956a4172e460d906b4de60ee77de23264fc1"
+		},
+		{
+			"ImportPath": "github.com/docker/spdystream",
+			"Rev": "e372247595b2edd26f6d022288e97eed793d70a2"
+		},
+		{
+			"ImportPath": "github.com/rjeczalik/notify",
+			"Rev": "9ae2c42a589ea0ee4761559fd5b2c4b747b4150f"
+		}
+	]
+}
