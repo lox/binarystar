@@ -1,0 +1,53 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"path": "appengine/datastore",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "WPXei7SwZHCRvqvXLgEDYbCl/Es=",
+			"path": "github.com/dmcgowan/msgpack",
+			"revision": "7b62bc929e75dbc4ae8b640dc69e1bea70a7c283",
+			"revisionTime": "2016-09-09T23:50:50Z"
+		},
+		{
+			"checksumSHA1": "pqfvAkf5ohkDi3ai2S9djMwdbS4=",
+			"path": "github.com/docker/libchan",
+			"revision": "0328dcec840a0659448faf08af087135fffb7fde",
+			"revisionTime": "2016-05-12T18:29:33Z"
+		},
+		{
+			"checksumSHA1": "c+1MdJklZDByaz6BRvTdqxRzxb8=",
+			"path": "github.com/docker/libchan/spdy",
+			"revision": "0328dcec840a0659448faf08af087135fffb7fde",
+			"revisionTime": "2016-05-12T18:29:33Z"
+		},
+		{
+			"checksumSHA1": "5Z0J6IIV39bPOf0NOVHLolGwcfo=",
+			"path": "github.com/docker/spdystream",
+			"revision": "bc6354cbbc295e925e4c611ffe90c1f287ee54db",
+			"revisionTime": "2017-09-12T18:36:27Z"
+		},
+		{
+			"checksumSHA1": "Gaf5SDyC0xV32LdjPCyUGvH5BhI=",
+			"path": "github.com/docker/spdystream/spdy",
+			"revision": "bc6354cbbc295e925e4c611ffe90c1f287ee54db",
+			"revisionTime": "2017-09-12T18:36:27Z"
+		},
+		{
+			"checksumSHA1": "GiszxKrNs2KWQSgGeP598Unavb4=",
+			"path": "github.com/rjeczalik/notify",
+			"revision": "88a54d914928e1faebb1c2195605dc87bd98dc27",
+			"revisionTime": "2017-06-01T08:19:37Z"
+		},
+		{
+			"checksumSHA1": "uggjqMBFNJd11oNco2kbkAT641w=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "314a259e304ff91bd6985da2a7149bbf91237993",
+			"revisionTime": "2017-07-19T03:44:26Z"
+		}
+	],
+	"rootPath": "github.com/lox/binarystar"
+}
