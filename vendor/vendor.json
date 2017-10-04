@@ -37,16 +37,16 @@
 			"revisionTime": "2017-09-12T18:36:27Z"
 		},
 		{
-			"checksumSHA1": "GiszxKrNs2KWQSgGeP598Unavb4=",
-			"path": "github.com/rjeczalik/notify",
-			"revision": "88a54d914928e1faebb1c2195605dc87bd98dc27",
-			"revisionTime": "2017-06-01T08:19:37Z"
+			"checksumSHA1": "LI9vdJJ/cOBwVI4y/8NIWp2nW4U=",
+			"path": "github.com/fsnotify/fsevents",
+			"revision": "3ceee05210c3babaa38cdc9181dabdcc83076a44",
+			"revisionTime": "2017-03-31T13:51:01Z"
 		},
 		{
-			"checksumSHA1": "uggjqMBFNJd11oNco2kbkAT641w=",
-			"path": "golang.org/x/sys/unix",
-			"revision": "314a259e304ff91bd6985da2a7149bbf91237993",
-			"revisionTime": "2017-07-19T03:44:26Z"
+			"checksumSHA1": "uxAGkaw3fZEQuJUaMbd26pHzcYw=",
+			"path": "github.com/monmohan/xferspdy",
+			"revision": "acb5bccb15002ed9352a46024de27a8f377400ba",
+			"revisionTime": "2016-08-20T16:49:52Z"
 		}
 	],
 	"rootPath": "github.com/lox/binarystar"

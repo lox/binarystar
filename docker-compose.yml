@@ -1,0 +1,8 @@
+version: '2.1'
+
+services:
+  daemon:
+    build: .
+    command: -listen 0.0.0.0:8924 /tmp/binarystar
+    ports:
+      - 8924:8924
