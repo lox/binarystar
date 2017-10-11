@@ -41,12 +41,6 @@
 			"path": "github.com/fsnotify/fsevents",
 			"revision": "3ceee05210c3babaa38cdc9181dabdcc83076a44",
 			"revisionTime": "2017-03-31T13:51:01Z"
-		},
-		{
-			"checksumSHA1": "uxAGkaw3fZEQuJUaMbd26pHzcYw=",
-			"path": "github.com/monmohan/xferspdy",
-			"revision": "acb5bccb15002ed9352a46024de27a8f377400ba",
-			"revisionTime": "2016-08-20T16:49:52Z"
 		}
 	],
 	"rootPath": "github.com/lox/binarystar"

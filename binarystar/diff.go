@@ -1,25 +1,30 @@
 package binarystar
 
-import "log"
+import (
+	"fmt"
+	"os"
+)
 
-func FileInfoEqual(f1, f2 FileInfo) bool {
-	if f1.Path != f2.Path || f1.Size != f2.Size || f1.Mode != f2.Mode {
-		log.Printf("Path, size or mode wasn't equal")
-		return false
+func FileInfoEqual(f1, f2 FileInfo) (bool, string) {
+	if f1.Path != f2.Path {
+		return false, fmt.Sprintf("Path wasn't equal: %q vs %q", f1.Path, f2.Path)
+	}
+	if f1.Size != f2.Size {
+		return false, fmt.Sprintf("Size wasn't equal on %s: %v vs %v", f1.Path, f1.Size, f2.Size)
+	}
+	if f1.Mode != f2.Mode {
+		return false, fmt.Sprintf("Mode wasn't equal on %s: %v vs %v", f1.Path, os.FileMode(f1.Mode), os.FileMode(f2.Mode))
 	}
 	if f1.IsDeleted != f2.IsDeleted {
-		log.Printf("IsDeleted weren't equal")
-		return false
+		return false, fmt.Sprintf("IsDeleted weren't equal")
 	}
 	if !f1.ModTime.Equal(f2.ModTime) {
-		log.Printf("Modtimes weren't equal")
-		return false
+		return false, fmt.Sprintf("Modtimes weren't equal")
 	}
-	if !FingerprintEqual(f1.Fingerprint, f2.Fingerprint) {
-		log.Printf("Fingerprints weren't equal")
-		return false
+	if !fingerprintEqual(f1.Fingerprint, f2.Fingerprint) {
+		return false, fmt.Sprintf("Fingerprints weren't equal")
 	}
-	return true
+	return true, ""
 }
 
 // Diff compares two sets and returns the difference as a ChangeSet
@@ -33,9 +38,9 @@ func Diff(s1, s2 FileSet, matcher *MatcherSet) ChangeSet {
 		}
 		f2, ok := s2.Get(f1.Path)
 		if !ok {
-			changes.Delete = append(changes.Delete, DeleteChange{f1.AsDeleted()})
-		} else if !FileInfoEqual(f1, f2) {
-			changes.Modify = append(changes.Modify, ModifyChange{f2})
+			changes.Delete = append(changes.Delete, DeleteChange{From: f1, To: f1.AsDeleted()})
+		} else if equal, _ := FileInfoEqual(f1, f2); equal {
+			changes.Modify = append(changes.Modify, ModifyChange{From: f1, To: f2})
 		}
 	}
 
@@ -45,7 +50,7 @@ func Diff(s1, s2 FileSet, matcher *MatcherSet) ChangeSet {
 			continue
 		}
 		if _, ok := s1.Get(f2.Path); !ok {
-			changes.Add = append(changes.Add, AddChange{f2})
+			changes.Add = append(changes.Add, AddChange{FileInfo: f2})
 		}
 	}
 	return changes

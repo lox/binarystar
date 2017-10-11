@@ -1,23 +1,24 @@
 package binarystar
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
+	"unsafe"
 
-	"github.com/monmohan/xferspdy"
+	"github.com/lox/xferspdy"
+	"github.com/pkg/errors"
 )
 
+// ScanFile scans a single file and returns it as FileInfo
 func ScanFile(dir string, key string) (FileInfo, error) {
 	path := filepath.Join(dir, key)
 	info, err := os.Stat(path)
 	if err != nil {
-		return FileInfo{}, err
+		return FileInfo{}, errors.Wrap(err, "ScanFile failed")
 	}
 	return FileInfo{
 		Dir:         filepath.ToSlash(dir),
@@ -25,11 +26,15 @@ func ScanFile(dir string, key string) (FileInfo, error) {
 		Size:        info.Size(),
 		Mode:        uint32(info.Mode()),
 		ModTime:     info.ModTime(),
-		Fingerprint: encodeFingerprint(xferspdy.NewFingerprint(path, 1024)),
+		Fingerprint: fingerprintFromFile(path),
 	}, nil
 }
 
+// Scan scans a directory and returns a FileSet
 func Scan(dir string, matcher *MatcherSet) (FileSet, error) {
+	if matcher == nil {
+		matcher = NewMatcherSet(MatchAll)
+	}
 	result := FileSet{}
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -51,7 +56,7 @@ func Scan(dir string, matcher *MatcherSet) (FileSet, error) {
 			Size:        info.Size(),
 			Mode:        uint32(info.Mode()),
 			ModTime:     info.ModTime(),
-			Fingerprint: encodeFingerprint(xferspdy.NewFingerprint(path, 1024)),
+			Fingerprint: fingerprintFromFile(path),
 		})
 	})
 
@@ -60,93 +65,67 @@ func Scan(dir string, matcher *MatcherSet) (FileSet, error) {
 
 func FingerprintFromString(s string) *Fingerprint {
 	xfp := xferspdy.NewFingerprintFromReader(strings.NewReader(s), 1024)
-	return encodeFingerprint(xfp)
+	return (*Fingerprint)(unsafe.Pointer(xfp))
 }
 
-func FingerprintEqual(f1, f2 *Fingerprint) bool {
+func fingerprintFromFile(filename string) *Fingerprint {
+	return (*Fingerprint)(unsafe.Pointer(xferspdy.NewFingerprint(filename, 1024)))
+}
+
+func fingerprintEqual(f1, f2 *Fingerprint) bool {
 	if f1 == nil && f2 == nil {
 		return true
 	}
 	if f1 == nil || f2 == nil {
 		return false
 	}
-	xfp1, err := decodeFingerprint(f1)
-	if err != nil {
-		log.Println(err)
-		return false
-	}
-	xfp2, err := decodeFingerprint(f2)
-	if err != nil {
-		log.Println(err)
-		return false
-	}
-	return xfp1.DeepEqual(xfp2)
+	return (*xferspdy.Fingerprint)(unsafe.Pointer(f1)).DeepEqual((*xferspdy.Fingerprint)(unsafe.Pointer(f2)))
 }
 
-// for our wireformat, we need to convert some of the internals of the fingerprint
-func encodeFingerprint(xfp *xferspdy.Fingerprint) *Fingerprint {
-	fp := &Fingerprint{
-		Blocksz:  xfp.Blocksz,
-		BlockMap: map[string]map[string]Block{},
+func generatePatch(filename string, from, to *Fingerprint) Patch {
+	xfp := (*xferspdy.Fingerprint)(unsafe.Pointer(to))
+	xblocks := xferspdy.NewDiff(filename, *xfp)
+	blocks := make([]Block, len(xblocks))
+
+	for idx := range xblocks {
+		block := (*Block)(unsafe.Pointer(&xblocks[idx]))
+		blocks[idx] = *block
 	}
 
-	// Adler-32 hash of Block --> SHA256 hash of Block -->Block
-	for adlerHash, blocksMap := range xfp.BlockMap {
-		newBlocksMap := map[string]Block{}
-
-		for sha256Bytes, xblock := range blocksMap {
-			newBlocksMap[hex.EncodeToString(sha256Bytes[:])] = Block{
-				Start:      xblock.Start,
-				End:        xblock.End,
-				Checksum32: xblock.Checksum32,
-				Sha256hash: xblock.Sha256hash,
-				HasData:    xblock.HasData,
-				RawBytes:   xblock.RawBytes,
-			}
-		}
-
-		fp.BlockMap[fmt.Sprintf("%d", adlerHash)] = newBlocksMap
-	}
-
-	return fp
+	return Patch{Blocks: blocks}
 }
 
-func decodeFingerprint(fp *Fingerprint) (*xferspdy.Fingerprint, error) {
-	xfp := &xferspdy.Fingerprint{
-		Blocksz:  fp.Blocksz,
-		BlockMap: map[uint32]map[[sha256.Size]byte]xferspdy.Block{},
+func applyPatch(filename string, patch Patch, expected *Fingerprint) error {
+	xblocks := make([]xferspdy.Block, len(patch.Blocks))
+
+	for idx := range patch.Blocks {
+		xblock := (*xferspdy.Block)(unsafe.Pointer(&patch.Blocks[idx]))
+		xblocks[idx] = *xblock
 	}
 
-	// Adler-32 hash of Block --> SHA256 hash of Block -->Block
-	for adlerHashStr, blocksMap := range fp.BlockMap {
-		xBlocksMap := map[[sha256.Size]byte]xferspdy.Block{}
-
-		for sha256BytesStr, block := range blocksMap {
-			decoded, err := hex.DecodeString(sha256BytesStr)
-			if err != nil {
-				return nil, err
-			}
-
-			var sha256Bytes [sha256.Size]byte
-			copy(sha256Bytes[:], decoded[:sha256.Size])
-
-			xBlocksMap[sha256Bytes] = xferspdy.Block{
-				Start:      block.Start,
-				End:        block.End,
-				Checksum32: block.Checksum32,
-				Sha256hash: block.Sha256hash,
-				HasData:    block.HasData,
-				RawBytes:   block.RawBytes,
-			}
-		}
-
-		adlerHash, err := strconv.ParseUint(adlerHashStr, 10, 32)
-		if err != nil {
-			return nil, err
-		}
-
-		xfp.BlockMap[uint32(adlerHash)] = xBlocksMap
+	tmpfile, err := ioutil.TempFile("", "patch")
+	if err != nil {
+		return err
+	}
+	if err = xferspdy.PatchFile(xblocks, filename, tmpfile); err != nil {
+		return err
 	}
 
-	return xfp, nil
+	log.Printf("Applied patch of %d blocks to %s (%s)", len(xblocks), filename, tmpfile.Name())
+
+	if err = tmpfile.Close(); err != nil {
+		return err
+	}
+
+	newFingerprint := fingerprintFromFile(tmpfile.Name())
+
+	if !fingerprintEqual(newFingerprint, expected) {
+		return fmt.Errorf("Fingerprint didn't match after patch was applied")
+	}
+
+	if err = os.Rename(tmpfile.Name(), filename); err != nil {
+		return err
+	}
+
+	return nil
 }

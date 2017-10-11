@@ -31,7 +31,7 @@ func TestFileDiffWithDifferentTimes(t *testing.T) {
 
 func TestFileDiffWithDifferentSizes(t *testing.T) {
 	if binarystar.FileInfoEqual(binarystar.FileInfo{Size: 1000},
-		binarystar.FileInfo{Size: 1000}) {
+		binarystar.FileInfo{Size: 1001}) {
 		t.Fatalf("Different sizes shouldn't be equal")
 	}
 }

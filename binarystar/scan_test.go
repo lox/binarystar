@@ -59,8 +59,12 @@ func newTestFileDir(t *testing.T, file ...testFile) *testFileDir {
 	if err != nil {
 		t.Fatal(err)
 	}
+	resolvedDirPath, err := filepath.EvalSymlinks(dirPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 	dir := &testFileDir{
-		Dir:   dirPath,
+		Dir:   resolvedDirPath,
 		Files: []testFile{},
 		t:     t,
 	}

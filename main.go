@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
+	"net"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/lox/binarystar/binarystar"
 )
@@ -21,6 +26,7 @@ func main() {
 		listen  = flag.String("listen", "", "the ip and port to bind to")
 		connect = flag.String("connect", "", "the ip and port to connect to")
 		ignore  = flag.String("ignore", "", "ignores files that match the provided pattern")
+		debug   = flag.Bool("debug", false, "enable debugging")
 	)
 	flag.Usage = usage
 	flag.Parse()
@@ -28,7 +34,15 @@ func main() {
 		usage()
 	}
 
+	if (*listen == "" && *connect == "") || (*listen != "" && *connect != "") {
+		log.Fatal("Either -listen or -connect must be used")
+	}
+
 	log.SetFlags(log.Lmicroseconds)
+
+	if *debug {
+		go startProfiler()
+	}
 
 	dir, err := filepath.Abs(flag.Arg(0))
 	if err != nil {
@@ -44,11 +58,12 @@ func main() {
 		matcher.Exclude(binarystar.MatchPattern(*ignore))
 	}
 
-	if (*listen == "" && *connect == "") || (*listen != "" && *connect != "") {
-		log.Fatal("Either -listen or -connect must be used")
+	tree, err := binarystar.NewTree(dir, matcher)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	daemon, err := binarystar.NewDaemon(dir, matcher)
+	daemon, err := binarystar.NewDaemon(context.Background(), tree)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,4 +77,16 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+}
+
+func startProfiler() {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Running pprof on http://%s/debug/pprof", listener.Addr().String())
+	runtime.SetMutexProfileFraction(5)
+
+	log.Fatal(http.Serve(listener, nil))
 }

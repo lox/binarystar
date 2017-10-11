@@ -5,7 +5,10 @@ import (
 	"os"
 )
 
-var ErrAlreadyInSet = errors.New("file already in set")
+var (
+	ErrAlreadyInSet = errors.New("file already in set")
+	ErrNotExists    = errors.New("file not in set")
+)
 
 type FileSet []FileInfo
 

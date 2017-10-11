@@ -30,7 +30,7 @@ func main() {
 				log.Fatal("deleteRandomFile", err)
 			}
 		}
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Second)
 	}
 }
 
@@ -93,8 +93,28 @@ func modifyRandomFile(dir string) error {
 	if err != nil {
 		return err
 	}
-	switch randomInt(1, 4) {
-	case 2:
+	switch randomInt(1, 6) {
+	case 1, 2, 3:
+		log.Printf("Modifying content of %s", f)
+		b := []byte("llamas")
+
+		fo, err := os.OpenFile(f, os.O_WRONLY, stat.Mode())
+		if err != nil {
+			return err
+		}
+
+		offset := rand.Int63n(stat.Size() - int64(len(b)))
+		log.Printf("Writing %d bytes at file offset %d", len(b), offset)
+
+		if _, err = fo.WriteAt(b, offset); err != nil {
+			return err
+		}
+
+		if err = fo.Close(); err != nil {
+			return err
+		}
+
+	case 4:
 		log.Printf("Modifying mode of %s", f)
 		modes := []os.FileMode{
 			0777,
@@ -110,7 +130,7 @@ func modifyRandomFile(dir string) error {
 			return err
 		}
 
-	case 3:
+	case 5:
 		log.Printf("Modifying time modified of %s", f)
 		durations := []time.Duration{
 			time.Second * 10,
@@ -133,7 +153,6 @@ func modifyRandomFile(dir string) error {
 func deleteRandomFile(dir string) error {
 	log.Printf("Deleting a file")
 	f, err := pickRandomFile(dir)
-	log.Printf("Err: %#v", err)
 	if err == os.ErrNotExist {
 		return nil
 	}
